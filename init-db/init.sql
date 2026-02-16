@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS students (
+  id SERIAL PRIMARY KEY,
+  firstname TEXT NOT NULL,
+  name TEXT NOT NULL,
+  domain TEXT NOT NULL
+);
