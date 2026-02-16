@@ -5,7 +5,8 @@ export async function createStudent(req, res) {
     const student = await studentService.registerStudent(req.body);
     res.status(201).json(student);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    const statusCode = err.statusCode || 500;
+    res.status(statusCode).json({ error: err.message });
   }
 }
 
@@ -15,7 +16,8 @@ export async function getStudents(req, res) {
     const students = await studentService.listStudents(domain);
     res.json(students);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    const statusCode = err.statusCode || 500;
+    res.status(statusCode).json({ error: err.message });
   }
 }
 
@@ -25,7 +27,8 @@ export async function getStudentById(req, res) {
     const student = await studentService.getStudentById(id);
     res.json(student);
   } catch (err) {
-    res.status(404).json({ error: err.message });
+    const statusCode = err.statusCode || 500;
+    res.status(statusCode).json({ error: err.message });
   }
 }
 
@@ -35,7 +38,8 @@ export async function updateStudent(req, res) {
     const student = await studentService.updateStudent(id, req.body);
     res.json(student);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    const statusCode = err.statusCode || 500;
+    res.status(statusCode).json({ error: err.message });
   }
 }
 
@@ -45,6 +49,7 @@ export async function deleteStudent(req, res) {
     await studentService.deleteStudent(id);
     res.status(204).send();
   } catch (err) {
-    res.status(404).json({ error: err.message });
+    const statusCode = err.statusCode || 500;
+    res.status(statusCode).json({ error: err.message });
   }
 }
