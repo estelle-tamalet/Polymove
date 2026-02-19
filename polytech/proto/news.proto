@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package mi8;
+
+service NewsService {
+  rpc GetLatestNews (LimitRequest) returns (NewsList);
+  rpc GetLatestNewsInCity (CityRequest) returns (NewsList);
+}
+
+message News {
+  string id = 1;
+  string title = 2;
+  string city = 3;
+  string country = 4;
+  string content = 5;
+  int64 createdAt = 6;
+}
+
+message LimitRequest {
+  int32 limit = 1;
+}
+
+message CityRequest {
+  string city = 1;
+  int32 limit = 2;
+}
+
+message NewsList {
+  repeated News news = 1;
+}
