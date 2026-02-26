@@ -21,7 +21,23 @@ services:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+  
+  redis:
+    container_name: mi8-redis
+    image: redis:7-alpine
+    restart: unless-stopped
+    networks:
+      - polymove-network
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
 
 volumes:
   postgres_data:
   mongo_data:
+  redis_data:
+
+networks:
+  polymove-network:
+    driver: bridge

@@ -5,6 +5,7 @@ package mi8;
 service NewsService {
   rpc GetLatestNews (LimitRequest) returns (NewsList);
   rpc GetLatestNewsInCity (CityRequest) returns (NewsList);
+  rpc CreateNews (News) returns (Empty);
 }
 
 message News {
@@ -28,3 +29,5 @@ message CityRequest {
 message NewsList {
   repeated News news = 1;
 }
+
+message Empty {}

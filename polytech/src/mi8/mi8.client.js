@@ -10,7 +10,7 @@ const protoPath = path.join(__dirname, "../../proto/news.proto");
 
 const packageDef = protoLoader.loadSync(protoPath, {
   keepCase: true,
-  longs: String,
+  longs: Number,
   enums: String,
   defaults: true,
   oneofs: true
@@ -32,6 +32,11 @@ export function getLatestNews(limit = 5) {
     }
 
     console.log("Latest news from MI8:");
-    console.log(response.news);
+    response.news.forEach(news => {
+      console.log({
+        ...news,
+        createdAt: new Date(news.createdAt).toLocaleString()
+      });
+    });
   });
 }

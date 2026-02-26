@@ -1,3 +1,5 @@
+import { createClient, RedisClientType } from 'redis';
+
 export interface News {
   id: string;
   title: string;
@@ -7,36 +9,64 @@ export interface News {
   createdAt: number;
 }
 
-export class ArrayNewsRepository {
-  private news: News[] = [
-    {
-      id: "1",
-      title: "Tech boom in Berlin",
-      city: "Berlin",
-      country: "Germany",
-      content: "Startups growing fast",
-      createdAt: Date.now()
-    },
-    {
-      id: "2",
-      title: "Paris cultural festival",
-      city: "Paris",
-      country: "France",
-      content: "Big cultural event",
-      createdAt: Date.now()
-    }
-  ];
+export class RedisNewsRepository {
+  private client: RedisClientType;
 
-  getLatestNews(limit: number): News[] {
-    return this.news
-      .sort((a, b) => b.createdAt - a.createdAt)
-      .slice(0, limit);
+  constructor() {
+    this.client = createClient({ url: 'redis://localhost:6379' });
+    this.client.on('error', (err) => console.error('Redis error:', err));
   }
 
-  getLatestNewsInCity(city: string, limit: number): News[] {
-    return this.news
-      .filter(n => n.city.toLowerCase() === city.toLowerCase())
-      .sort((a, b) => b.createdAt - a.createdAt)
-      .slice(0, limit);
+  async connect(): Promise<void> {
+    await this.client.connect();
+  }
+
+  async createNews(news: News): Promise<void> {
+    await this.client.hSet(`news:${news.id}`, {
+      id: news.id,
+      title: news.title,
+      city: news.city,
+      country: news.country,
+      content: news.content,
+      createdAt: news.createdAt.toString()
+    });
+
+    await this.client.zAdd('news:latest', {
+      score: news.createdAt,
+      value: news.id
+    });
+
+    await this.client.zAdd(`news:city:${news.city.toLowerCase()}`, {
+      score: news.createdAt,
+      value: news.id
+    });
+  }
+
+  async getLatestNews(limit: number): Promise<News[]> {
+    const ids = await this.client.zRange('news:latest', 0, limit - 1, { REV: true });
+    return this.fetchNewsByIds(ids);
+  }
+
+  async getLatestNewsInCity(city: string, limit: number): Promise<News[]> {
+    const ids = await this.client.zRange(`news:city:${city.toLowerCase()}`, 0, limit - 1, { REV: true });
+    return this.fetchNewsByIds(ids);
+  }
+
+  private async fetchNewsByIds(ids: string[]): Promise<News[]> {
+    const newsList: News[] = [];
+    for (const id of ids) {
+      const data = await this.client.hGetAll(`news:${id}`);
+      if (data.id) {
+        newsList.push({
+          id: data.id,
+          title: data.title,
+          city: data.city,
+          country: data.country,
+          content: data.content,
+          createdAt: parseInt(data.createdAt)
+        });
+      }
+    }
+    return newsList;
   }
 }
