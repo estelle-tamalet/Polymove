@@ -20,23 +20,30 @@ const grpcObject = grpc.loadPackageDefinition(packageDef);
 const newsPackage = grpcObject.mi8;
 
 const client = new newsPackage.NewsService(
-  "localhost:50051",
+  process.env.MI8_GRPC_URL || "localhost:50051",
   grpc.credentials.createInsecure()
 );
 
-export function getLatestNews(limit = 5) {
-  client.GetLatestNews({ limit }, (err, response) => {
-    if (err) {
-      console.error("gRPC error:", err);
-      return;
-    }
+export function getCityScore(city) {
+  return new Promise((resolve, reject) => {
+    client.GetCityScore({ city }, (err, response) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve(response.score);
+    });
+  });
+}
 
-    console.log("Latest news from MI8:");
-    response.news.forEach(news => {
-      console.log({
-        ...news,
-        createdAt: new Date(news.createdAt).toLocaleString()
-      });
+export function getLatestNewsInCity(city, limit = 5) {
+  return new Promise((resolve, reject) => {
+    client.GetLatestNewsInCity({ city, limit }, (err, response) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve(response.news);
     });
   });
 }
