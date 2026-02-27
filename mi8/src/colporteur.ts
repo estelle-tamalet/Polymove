@@ -18,12 +18,13 @@ const client = new newsPackage.NewsService(
 );
 
 const news = {
-  id: "2",
-  title: "Breaking news from Barcelone",
-  city: "Barcelone",
+  id: "3",
+  title: "Innovation hub opens in Barcelona",
+  city: "Barcelona",
   country: "Spain",
-  content: "Something interesting happened",
-  createdAt: Date.now()
+  content: "New tech center attracts startups",
+  createdAt: Date.now(),
+  tags: ["innovation", "entertainment"]
 };
 
 client.CreateNews(news, (err: any, response: any) => {
@@ -32,4 +33,14 @@ client.CreateNews(news, (err: any, response: any) => {
     return;
   }
   console.log("News created:", news);
+  console.log("\nGetting Barcelona score...");
+  
+  client.GetCityScore({ city: "Barcelona" }, (err: any, response: any) => {
+    if (err) {
+      console.error("Error getting score:", err);
+      return;
+    }
+    console.log("Barcelona score:", response.score);
+    process.exit(0);
+  });
 });

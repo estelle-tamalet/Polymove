@@ -6,6 +6,8 @@ service NewsService {
   rpc GetLatestNews (LimitRequest) returns (NewsList);
   rpc GetLatestNewsInCity (CityRequest) returns (NewsList);
   rpc CreateNews (News) returns (Empty);
+  rpc GetCityScore (CityScoreRequest) returns (CityScoreResponse);
+  rpc GetTopCities (LimitRequest) returns (CityScoreList);
 }
 
 message News {
@@ -15,6 +17,7 @@ message News {
   string country = 4;
   string content = 5;
   int64 createdAt = 6;
+  repeated string tags = 7;
 }
 
 message LimitRequest {
@@ -28,6 +31,28 @@ message CityRequest {
 
 message NewsList {
   repeated News news = 1;
+}
+
+message CityScoreRequest {
+  string city = 1;
+}
+
+message CityScoreResponse {
+  CityScore score = 1;
+}
+
+message CityScoreList {
+  repeated CityScore scores = 1;
+}
+
+message CityScore {
+  string city = 1;
+  int32 safety = 2;
+  int32 economy = 3;
+  int32 qualityOfLife = 4;
+  int32 culture = 5;
+  int64 lastUpdated = 6;
+  int32 totalScore = 7;
 }
 
 message Empty {}

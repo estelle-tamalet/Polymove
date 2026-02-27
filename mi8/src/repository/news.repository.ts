@@ -7,6 +7,7 @@ export interface News {
   country: string;
   content: string;
   createdAt: number;
+  tags: string[];
 }
 
 export class RedisNewsRepository {
@@ -28,7 +29,8 @@ export class RedisNewsRepository {
       city: news.city,
       country: news.country,
       content: news.content,
-      createdAt: news.createdAt.toString()
+      createdAt: news.createdAt.toString(),
+      tags: JSON.stringify(news.tags || [])
     });
 
     await this.client.zAdd('news:latest', {
@@ -63,7 +65,8 @@ export class RedisNewsRepository {
           city: data.city,
           country: data.country,
           content: data.content,
-          createdAt: parseInt(data.createdAt)
+          createdAt: parseInt(data.createdAt),
+          tags: data.tags ? JSON.parse(data.tags) : []
         });
       }
     }
