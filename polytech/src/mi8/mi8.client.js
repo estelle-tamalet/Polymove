@@ -31,7 +31,7 @@ export function getCityScore(city) {
         reject(err);
         return;
       }
-      resolve(response.score);
+      resolve(response?.score ?? null);
     });
   });
 }
@@ -43,7 +43,7 @@ export function getLatestNewsInCity(city, limit = 5) {
         reject(err);
         return;
       }
-      resolve(response.news);
+      resolve(response?.news ?? []);
     });
   });
 }
