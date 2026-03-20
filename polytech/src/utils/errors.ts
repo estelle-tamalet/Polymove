@@ -1,23 +1,26 @@
 export class NotFoundError extends Error {
+  statusCode: number = 404;
+
   constructor(message = "Resource not found") {
     super(message);
     this.name = "NotFoundError";
-    this.statusCode = 404;
   }
 }
 
 export class ValidationError extends Error {
+  statusCode: number = 400;
+
   constructor(message = "Validation failed") {
     super(message);
     this.name = "ValidationError";
-    this.statusCode = 400;
   }
 }
 
 export class BadRequestError extends Error {
+  statusCode: number = 400;
+
   constructor(message = "Bad request") {
     super(message);
     this.name = "BadRequestError";
-    this.statusCode = 400;
   }
 }

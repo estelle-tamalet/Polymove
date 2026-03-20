@@ -1,7 +1,13 @@
-import * as studentModel from "../models/student.model.js";
-import { NotFoundError, ValidationError } from "../utils/errors.js";
+import * as studentModel from "../models/student.model";
+import { NotFoundError, ValidationError } from "../utils/errors";
 
-export async function registerStudent(data) {
+export interface RegisterStudentData {
+  firstname: string;
+  name: string;
+  domain: string;
+}
+
+export async function registerStudent(data: RegisterStudentData): Promise<studentModel.Student> {
   const { firstname, name, domain } = data;
 
   if (!firstname || !name || !domain) {
@@ -11,11 +17,11 @@ export async function registerStudent(data) {
   return studentModel.createStudent({ firstname, name, domain });
 }
 
-export async function listStudents(domain) {
+export async function listStudents(domain?: string): Promise<studentModel.Student[]> {
   return studentModel.getAllStudents(domain);
 }
 
-export async function getStudentById(id) {
+export async function getStudentById(id: number): Promise<studentModel.Student> {
   const student = await studentModel.getStudentById(id);
 
   if (!student) {
@@ -25,7 +31,7 @@ export async function getStudentById(id) {
   return student;
 }
 
-export async function updateStudent(id, data) {
+export async function updateStudent(id: number, data: Partial<RegisterStudentData>): Promise<studentModel.Student> {
   const student = await studentModel.getStudentById(id);
 
   if (!student) {
@@ -35,7 +41,7 @@ export async function updateStudent(id, data) {
   return studentModel.updateStudent(id, data);
 }
 
-export async function deleteStudent(id) {
+export async function deleteStudent(id: number): Promise<void> {
   const student = await studentModel.getStudentById(id);
 
   if (!student) {
@@ -44,4 +50,3 @@ export async function deleteStudent(id) {
 
   return studentModel.deleteStudent(id);
 }
-

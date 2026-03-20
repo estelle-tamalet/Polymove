@@ -1,9 +1,9 @@
 import "dotenv/config";
-import express from "express";
+import express, { Express } from "express";
 import mongoose from "mongoose";
-import offerRoutes from "./routes/offer.routes.js";
+import offerRoutes from "./routes/offer.routes";
 
-const app = express();
+const app: Express = express();
 const PORT = process.env.PORT || 4000;
 
 app.use(express.json());

@@ -1,9 +1,9 @@
 import "dotenv/config";
-import express from "express";
-import studentRoutes from "./routes/student.routes.js";
-import internshipRoutes from "./routes/internship.routes.js";
+import express, { Express } from "express";
+import studentRoutes from "./routes/student.routes";
+import internshipRoutes from "./routes/internship.routes";
 
-const app = express();
+const app: Express = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());

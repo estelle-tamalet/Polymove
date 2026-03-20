@@ -1,7 +1,34 @@
-import { Offer } from "../models/offer.model.js";
-import { NotFoundError, ValidationError, ForbiddenError } from "../utils/errors.js";
+import { Offer, IOfferDocument } from "../models/offer.model";
+import { NotFoundError, ValidationError, ForbiddenError } from "../utils/errors";
 
-export async function createOffer(data) {
+export interface CreateOfferData {
+  title: string;
+  link?: string;
+  city: string;
+  domain: string;
+  salary?: number;
+  startDate?: Date;
+  endDate?: Date;
+  available?: boolean;
+}
+
+export interface UpdateOfferData {
+  title?: string;
+  link?: string;
+  city?: string;
+  domain?: string;
+  salary?: number;
+  startDate?: Date;
+  endDate?: Date;
+  available?: boolean;
+}
+
+export interface OfferFilters {
+  domain?: string;
+  city?: string;
+}
+
+export async function createOffer(data: CreateOfferData): Promise<IOfferDocument> {
   const {
     title,
     link,
@@ -31,7 +58,7 @@ export async function createOffer(data) {
   return await offer.save();
 }
 
-export async function getOfferById(id) {
+export async function getOfferById(id: string): Promise<IOfferDocument> {
   try {
     const offer = await Offer.findById(id);
 
@@ -45,7 +72,7 @@ export async function getOfferById(id) {
 
     return offer;
   } catch (err) {
-    if (err.name === 'CastError') {
+    if (err instanceof Error && err.name === 'CastError') {
       throw new NotFoundError("Offer not found");
     }
     if (err instanceof NotFoundError || err instanceof ForbiddenError) {
@@ -55,8 +82,8 @@ export async function getOfferById(id) {
   }
 }
 
-export async function getOffers(filters) {
-  const query = { available: true };
+export async function getOffers(filters: OfferFilters): Promise<IOfferDocument[]> {
+  const query: Record<string, unknown> = { available: true };
 
   if (filters.domain) query.domain = filters.domain;
   if (filters.city) query.city = filters.city;
@@ -64,7 +91,7 @@ export async function getOffers(filters) {
   return await Offer.find(query);
 }
 
-export async function updateOffer(id, data) {
+export async function updateOffer(id: string, data: UpdateOfferData): Promise<IOfferDocument> {
   try {
     const offer = await Offer.findById(id);
 
@@ -85,7 +112,7 @@ export async function updateOffer(id, data) {
 
     return await offer.save();
   } catch (err) {
-    if (err.name === 'CastError') {
+    if (err instanceof Error && err.name === 'CastError') {
       throw new NotFoundError("Offer not found");
     }
     if (err instanceof NotFoundError) {
@@ -95,7 +122,7 @@ export async function updateOffer(id, data) {
   }
 }
 
-export async function deleteOffer(id) {
+export async function deleteOffer(id: string): Promise<void> {
   try {
     const offer = await Offer.findById(id);
 
@@ -105,7 +132,7 @@ export async function deleteOffer(id) {
 
     await Offer.findByIdAndDelete(id);
   } catch (err) {
-    if (err.name === 'CastError') {
+    if (err instanceof Error && err.name === 'CastError') {
       throw new NotFoundError("Offer not found");
     }
     if (err instanceof NotFoundError) {
@@ -114,4 +141,3 @@ export async function deleteOffer(id) {
     throw err;
   }
 }
-
