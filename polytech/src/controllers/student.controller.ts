@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import * as studentService from "../services/student.service";
+import * as studentRecommendationService from "../services/studentRecommendation.service";
 
 export async function createStudent(req: Request, res: Response): Promise<void> {
   try {
@@ -49,6 +50,22 @@ export async function deleteStudent(req: Request, res: Response): Promise<void> 
     const id = parseInt(req.params.id);
     await studentService.deleteStudent(id);
     res.status(204).send();
+  } catch (err) {
+    const statusCode = (err as any).statusCode || 500;
+    res.status(statusCode).json({ error: (err as Error).message });
+  }
+}
+
+export async function getRecommendedOffers(req: Request, res: Response): Promise<void> {
+  try {
+    const id = parseInt(req.params.id);
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+    const sortBy = req.query.sort_by as string | undefined;
+    const recommendations = await studentRecommendationService.getRecommendedOffers(id, {
+      limit,
+      sortBy
+    });
+    res.json(recommendations);
   } catch (err) {
     const statusCode = (err as any).statusCode || 500;
     res.status(statusCode).json({ error: (err as Error).message });

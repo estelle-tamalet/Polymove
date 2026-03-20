@@ -1,5 +1,5 @@
 import "dotenv/config";
-import express, { Express } from "express";
+import express, { Express, Request, Response } from "express";
 import studentRoutes from "./routes/student.routes";
 import internshipRoutes from "./routes/internship.routes";
 import { getOffers } from "./services/offerAggregator.service";
@@ -11,7 +11,7 @@ app.use(express.json());
 app.use(studentRoutes);
 app.use(internshipRoutes);
 
-app.get("/offers", async (req, res) => {
+app.get("/offers", async (req: Request, res: Response): Promise<void> => {
   try {
     const offers = await getOffers(req.query);
     res.json(offers);

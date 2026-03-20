@@ -24,8 +24,16 @@ const client = new newsPackage.NewsService(
   grpc.credentials.createInsecure()
 );
 
+export interface CityScore {
+  safety: number;
+  economy: number;
+  qualityOfLife: number;
+  culture: number;
+  totalScore: number;
+}
+
 export interface CityScoreResponse {
-  score?: unknown;
+  score?: CityScore;
 }
 
 export interface News {
@@ -36,7 +44,7 @@ export interface NewsResponse {
   news?: News[];
 }
 
-export function getCityScore(city: string): Promise<unknown> {
+export function getCityScore(city: string): Promise<CityScore | null> {
   return new Promise((resolve, reject) => {
     client.GetCityScore({ city }, (err: Error | null, response?: CityScoreResponse) => {
       if (err) {
