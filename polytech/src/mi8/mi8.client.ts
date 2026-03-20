@@ -1,7 +1,7 @@
 import path from "path";
 import { fileURLToPath } from "url";
-import grpc from "@grpc/grpc-js";
-import protoLoader from "@grpc/proto-loader";
+import * as grpc from "@grpc/grpc-js";
+import * as protoLoader from "@grpc/proto-loader";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,7 +16,7 @@ const packageDef = protoLoader.loadSync(protoPath, {
   oneofs: true
 });
 
-const grpcObject = grpc.loadPackageDefinition(packageDef);
+const grpcObject: any = grpc.loadPackageDefinition(packageDef);
 const newsPackage = grpcObject.mi8;
 
 const client = new newsPackage.NewsService(
@@ -24,9 +24,21 @@ const client = new newsPackage.NewsService(
   grpc.credentials.createInsecure()
 );
 
-export function getCityScore(city) {
+export interface CityScoreResponse {
+  score?: unknown;
+}
+
+export interface News {
+  [key: string]: unknown;
+}
+
+export interface NewsResponse {
+  news?: News[];
+}
+
+export function getCityScore(city: string): Promise<unknown> {
   return new Promise((resolve, reject) => {
-    client.GetCityScore({ city }, (err, response) => {
+    client.GetCityScore({ city }, (err: Error | null, response?: CityScoreResponse) => {
       if (err) {
         reject(err);
         return;
@@ -36,9 +48,9 @@ export function getCityScore(city) {
   });
 }
 
-export function getLatestNewsInCity(city, limit = 5) {
+export function getLatestNewsInCity(city: string, limit: number = 5): Promise<News[]> {
   return new Promise((resolve, reject) => {
-    client.GetLatestNewsInCity({ city, limit }, (err, response) => {
+    client.GetLatestNewsInCity({ city, limit }, (err: Error | null, response?: NewsResponse) => {
       if (err) {
         reject(err);
         return;
