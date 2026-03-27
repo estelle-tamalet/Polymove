@@ -12,6 +12,8 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init-db:/docker-entrypoint-initdb.d
+    networks:
+      - polymove-network
 
   mongo:
     image: mongo:7
@@ -21,6 +23,8 @@ services:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+    networks:
+      - polymove-network
   
   redis:
     container_name: mi8-redis
@@ -33,10 +37,71 @@ services:
     volumes:
       - redis_data:/data
 
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: polymove-rabbitmq
+    restart: unless-stopped
+    networks:
+      - polymove-network
+    ports:
+      - "5672:5672"    # AMQP port
+      - "15672:15672"  # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  erasmumu:
+    build: ./erasmumu
+    container_name: erasmumu-api
+    restart: unless-stopped
+    networks:
+      - polymove-network
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: 4000
+      MONGODB_URI: mongodb://erasmumu-mongo:27017/erasmumu
+    depends_on:
+      - mongo
+
+  polytech:
+    build: ./polytech
+    container_name: polytech-api
+    restart: unless-stopped
+    networks:
+      - polymove-network
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/polymove_polytech
+    depends_on:
+      - postgres
+      - mi8
+      - rabbitmq
+
+  mi8:
+    build: ./mi8
+    container_name: mi8-grpc
+    restart: unless-stopped
+    networks:
+      - polymove-network
+    ports:
+      - "50051:50051"
+    environment:
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://admin:admin@rabbitmq:5672
+    depends_on:
+      - redis
+      - rabbitmq
+
 volumes:
   postgres_data:
   mongo_data:
   redis_data:
+  rabbitmq_data:
 
 networks:
   polymove-network:

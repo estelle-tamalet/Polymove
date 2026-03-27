@@ -24,7 +24,7 @@ export class CityScoreRepository {
   private client: RedisClientType;
 
   constructor() {
-    this.client = createClient({ url: 'redis://localhost:6379' });
+    this.client = createClient({ url: process.env.REDIS_URL || 'redis://redis:6379' });
     this.client.on('error', (err) => console.error('Redis error:', err));
   }
 

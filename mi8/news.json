@@ -1,0 +1,98 @@
+[
+  {
+    "id": "1",
+    "title": "Innovation hub opens in Barcelona",
+    "city": "Barcelona",
+    "country": "Spain",
+    "content": "A new technology center has opened its doors to attract startups and tech innovators to Barcelona.",
+    "tags": ["innovation", "entertainment"]
+  },
+  {
+    "id": "2",
+    "title": "Paris museum renovation complete",
+    "city": "Paris",
+    "country": "France",
+    "content": "The famous art museum has completed its major renovation and reopened to visitors.",
+    "tags": ["culture", "entertainment"]
+  },
+  {
+    "id": "3",
+    "title": "Berlin healthcare center upgraded",
+    "city": "Berlin",
+    "country": "Germany",
+    "content": "New state-of-the-art healthcare facility now available in the city center.",
+    "tags": ["healthcare", "innovation"]
+  },
+  {
+    "id": "4",
+    "title": "Amsterdam cycling infrastructure expanded",
+    "city": "Amsterdam",
+    "country": "Netherlands",
+    "content": "New bike lanes and secure parking facilities improve urban mobility.",
+    "tags": ["innovation", "culture"]
+  },
+  {
+    "id": "5",
+    "title": "Rome cultural festival begins",
+    "city": "Rome",
+    "country": "Italy",
+    "content": "Annual international cultural festival kicks off with events across the city.",
+    "tags": ["culture", "entertainment"]
+  },
+  {
+    "id": "6",
+    "title": "Madrid economic partnership announced",
+    "city": "Madrid",
+    "country": "Spain",
+    "content": "Major new business initiatives strengthen Madrid's economic growth.",
+    "tags": ["innovation", "economy"]
+  },
+  {
+    "id": "7",
+    "title": "Vienna concert hall opens",
+    "city": "Vienna",
+    "country": "Austria",
+    "content": "State-of-the-art concert hall begins programming with world-class performances.",
+    "tags": ["culture", "entertainment"]
+  },
+  {
+    "id": "8",
+    "title": "Brussels technology innovation lab",
+    "city": "Brussels",
+    "country": "Belgium",
+    "content": "New research facility promotes technological advancement and startup development.",
+    "tags": ["innovation"]
+  },
+  {
+    "id": "9",
+    "title": "Prague healthcare initiative launched",
+    "city": "Prague",
+    "country": "Czech Republic",
+    "content": "Comprehensive healthcare program aims to improve quality of life for residents.",
+    "tags": ["healthcare", "innovation"]
+  },
+  {
+    "id": "10",
+    "title": "Lisbon green space development",
+    "city": "Lisbon",
+    "country": "Portugal",
+    "content": "New urban parks and green spaces enhance the quality of life in Lisbon.",
+    "tags": ["innovation", "entertainment"]
+  },
+  {
+    "id": "11",
+    "title": "Stockholm cultural investment",
+    "city": "Stockholm",
+    "country": "Sweden",
+    "content": "Major funding boost for cultural institutions strengthens the creative economy.",
+    "tags": ["culture", "innovation"]
+  },
+  {
+    "id": "12",
+    "title": "Warsaw business district modernized",
+    "city": "Warsaw",
+    "country": "Poland",
+    "content": "Downtown area sees significant development with modern office and retail spaces.",
+    "tags": ["innovation", "economy"]
+  }
+]

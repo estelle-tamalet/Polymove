@@ -1,46 +1,46 @@
-import * as grpc from "@grpc/grpc-js";
-import * as protoLoader from "@grpc/proto-loader";
+import * as fs from 'fs';
+import * as path from 'path';
+import { RabbitMQService } from './services/rabbitmq.service';
 
-const packageDef = protoLoader.loadSync("proto/news.proto", {
-  keepCase: true,
-  longs: Number,
-  enums: String,
-  defaults: true,
-  oneofs: true
-});
+interface News {
+  id: string;
+  title: string;
+  city: string;
+  country: string;
+  content: string;
+  tags: string[];
+}
 
-const grpcObject: any = grpc.loadPackageDefinition(packageDef);
-const newsPackage = grpcObject.mi8;
-
-const client = new newsPackage.NewsService(
-  "localhost:50051",
-  grpc.credentials.createInsecure()
-);
-
-const news = {
-  id: "3",
-  title: "Innovation hub opens in Barcelona",
-  city: "Barcelona",
-  country: "Spain",
-  content: "New tech center attracts startups",
-  createdAt: Date.now(),
-  tags: ["innovation", "entertainment"]
-};
-
-client.CreateNews(news, (err: any, response: any) => {
-  if (err) {
-    console.error("Error:", err);
-    return;
-  }
-  console.log("News created:", news);
-  console.log("\nGetting Barcelona score...");
-  
-  client.GetCityScore({ city: "Barcelona" }, (err: any, response: any) => {
-    if (err) {
-      console.error("Error getting score:", err);
-      return;
-    }
-    console.log("Barcelona score:", response.score);
-    process.exit(0);
+async function publishNews(): Promise<void> {
+  const rabbitmq = new RabbitMQService({
+    url: process.env.RABBITMQ_URL || 'amqp://admin:admin@localhost:5672',
+    exchange: 'news_exchange',
+    queue: 'news.created',
+    routingKey: 'news.created'
   });
-});
+
+  try {
+    await rabbitmq.connect();
+
+    // Load news from JSON file
+    const newsFilePath = path.join(__dirname, '..', 'news.json');
+    const newsData: News[] = JSON.parse(fs.readFileSync(newsFilePath, 'utf-8'));
+
+    console.log(`Publishing ${newsData.length} news items to RabbitMQ...`);
+
+    for (const news of newsData) {
+      await rabbitmq.publish(news);
+      console.log(`Published: ${news.title} (${news.city})`);
+    }
+
+    console.log('All news published successfully');
+    await rabbitmq.disconnect();
+    process.exit(0);
+  } catch (err) {
+    console.error('Error publishing news:', err);
+    process.exit(1);
+  }
+}
+
+publishNews();
+
