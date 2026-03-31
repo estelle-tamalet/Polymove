@@ -3,6 +3,7 @@ import {
   Subscriber,
   SubscriberData,
   StudentRegisteredEvent,
+  OfferCreatedEvent,
 } from "../models/subscriber.model.js";
 
 export async function createSubscriber(data: SubscriberData): Promise<Subscriber> {
@@ -69,6 +70,29 @@ export async function handleStudentRegistered(event: StudentRegisteredEvent): Pr
     console.log(`✓ Student ${event.studentId} preferences initialized`);
   } catch (err) {
     console.error(`Error handling student registered event: ${(err as Error).message}`);
+    throw err;
+  }
+}
+
+export async function handleOfferCreated(event: OfferCreatedEvent): Promise<void> {
+  console.log(`[Subscriber Service] Processing offer created event for offerId ${event.offerId}`);
+
+  try {
+    const subscribers = await subscriberRepository.getSubscribersByDomain(event.domain);
+
+    for (const subscriber of subscribers) {
+      if (!subscriber.enabled || !subscriber.contact) {
+        continue;
+      }
+
+      const alertMessage = `New ${event.domain} internship in ${event.city}: ${event.title}${event.salary ? ` (${event.salary}€)` : ''}`;
+
+      console.log(`[Alert] Sending ${subscriber.channel} alert to subscriber ${subscriber.studentId}: ${alertMessage}`);
+    }
+
+    console.log(`✓ Processed offer alert for ${subscribers.length} subscribers in domain ${event.domain}`);
+  } catch (err) {
+    console.error(`Error handling offer created event: ${(err as Error).message}`);
     throw err;
   }
 }

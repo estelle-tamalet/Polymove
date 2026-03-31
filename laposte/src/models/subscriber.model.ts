@@ -18,3 +18,12 @@ export interface StudentRegisteredEvent {
   domain: string;
   createdAt: Date;
 }
+
+export interface OfferCreatedEvent {
+  offerId: string;
+  title: string;
+  city: string;
+  domain: string;
+  salary?: number;
+  createdAt: Date;
+}

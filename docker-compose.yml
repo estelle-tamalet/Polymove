@@ -63,8 +63,10 @@ services:
     environment:
       PORT: 4000
       MONGODB_URI: mongodb://erasmumu-mongo:27017/erasmumu
+      RABBITMQ_URL: amqp://admin:admin@rabbitmq:5672
     depends_on:
       - mongo
+      - rabbitmq
 
   polytech:
     build: ./polytech

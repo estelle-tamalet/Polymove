@@ -1,21 +1,20 @@
 import * as amqp from "amqplib";
 
-export interface RabbitMQConfig {
+export interface RabbitMQSubscriberConfig {
   url: string;
   exchange: string;
   queue: string;
   routingKey: string;
 }
 
-export class RabbitMQService {
+export class RabbitMQSubscriber {
   private connection: any = null;
   private channel: any = null;
-  private config: RabbitMQConfig;
+  private config: RabbitMQSubscriberConfig;
 
-  constructor(config: RabbitMQConfig) {
+  constructor(config: RabbitMQSubscriberConfig) {
     this.config = config;
   }
-
 
   async connect(): Promise<void> {
     let retries = 5;
@@ -48,10 +47,6 @@ export class RabbitMQService {
     }
   }
 
-  /**
-   * Subscribe to messages on the configured queue
-   * @param callback - Async function to handle received messages
-   */
   async subscribe(callback: (msg: any) => Promise<void>): Promise<void> {
     if (!this.channel) {
       throw new Error("RabbitMQ channel not initialized");
@@ -64,58 +59,27 @@ export class RabbitMQService {
           if (msg) {
             try {
               await callback(msg);
-              this.channel!.ack(msg);
-              console.log(`✓ Message acknowledged: ${this.config.routingKey}`);
+              this.channel.ack(msg);
             } catch (err) {
-              console.error("Error processing message:", err);
-              this.channel!.nack(msg, false, true);
+              console.error(`[RabbitMQ] Error processing message:`, err);
+              this.channel.nack(msg, false, true);
             }
           }
         },
         { noAck: false }
       );
-
-      console.log(`✓ Subscribed to ${this.config.routingKey}`);
     } catch (err) {
-      console.error("Failed to subscribe:", err);
+      console.error("Failed to set up subscription:", err);
       throw err;
     }
   }
 
-  /**
-   * Publish a message to the exchange
-   * @param data - Message payload
-   */
-  async publish(data: any): Promise<void> {
-    if (!this.channel) {
-      throw new Error("RabbitMQ channel not initialized");
-    }
-
+  async disconnect(): Promise<void> {
     try {
-      this.channel.publish(
-        this.config.exchange,
-        this.config.routingKey,
-        Buffer.from(JSON.stringify(data)),
-        { persistent: true }
-      );
-      console.log(`✓ Message published: ${this.config.routingKey}`);
+      if (this.channel) await this.channel.close();
+      if (this.connection) await this.connection.close();
     } catch (err) {
-      console.error("Failed to publish message:", err);
-      throw err;
-    }
-  }
-
-  async close(): Promise<void> {
-    try {
-      if (this.channel) {
-        await this.channel.close();
-      }
-      if (this.connection) {
-        await this.connection.close();
-      }
-      console.log("✓ RabbitMQ connection closed");
-    } catch (err) {
-      console.error("Error closing RabbitMQ connection:", err);
+      console.error("Failed to disconnect from RabbitMQ:", err);
     }
   }
 }

@@ -3,32 +3,45 @@ import pkg from "pg";
 const { Pool } = pkg;
 
 async function ensureDatabaseExists(): Promise<void> {
-  const adminPool = new Pool({
-    host: process.env.DB_HOST || "localhost",
-    port: parseInt(process.env.DB_PORT || "5432"),
-    user: process.env.DB_USER || "postgres",
-    password: process.env.DB_PASSWORD || "postgres",
-    database: "postgres",
-  });
+  let retries = 5;
+  let delay = 1000;
 
-  try {
-    const result = await adminPool.query(
-      "SELECT 1 FROM pg_database WHERE datname = $1",
-      [process.env.DB_NAME || "polymove_laposte"]
-    );
+  while (retries > 0) {
+    try {
+      const adminPool = new Pool({
+        host: process.env.DB_HOST || "localhost",
+        port: parseInt(process.env.DB_PORT || "5432"),
+        user: process.env.DB_USER || "postgres",
+        password: process.env.DB_PASSWORD || "postgres",
+        database: "postgres",
+      });
 
-    if (result.rows.length === 0) {
-      console.log(`Creating database ${process.env.DB_NAME || "polymove_laposte"}...`);
-      await adminPool.query(
-        `CREATE DATABASE ${process.env.DB_NAME || "polymove_laposte"}`
+      const result = await adminPool.query(
+        "SELECT 1 FROM pg_database WHERE datname = $1",
+        [process.env.DB_NAME || "polymove_laposte"]
       );
-      console.log(`✓ Database ${process.env.DB_NAME || "polymove_laposte"} created`);
+
+      if (result.rows.length === 0) {
+        console.log(`Creating database ${process.env.DB_NAME || "polymove_laposte"}...`);
+        await adminPool.query(
+          `CREATE DATABASE ${process.env.DB_NAME || "polymove_laposte"}`
+        );
+        console.log(`✓ Database ${process.env.DB_NAME || "polymove_laposte"} created`);
+      }
+
+      await adminPool.end();
+      return;
+    } catch (err) {
+      retries--;
+      if (retries > 0) {
+        console.warn(`Database connect attempt failed, retrying in ${delay}ms... (${retries} retries left)`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        delay *= 1.5;
+      } else {
+        console.error("Error ensuring database exists:", err);
+        throw err;
+      }
     }
-  } catch (err) {
-    console.error("Error ensuring database exists:", err);
-    throw err;
-  } finally {
-    await adminPool.end();
   }
 }
 

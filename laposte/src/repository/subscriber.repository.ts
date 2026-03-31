@@ -209,6 +209,23 @@ export async function getAllSubscribers(studentId: number): Promise<Subscriber[]
 }
 
 /**
+ * Get all subscribers for a domain
+ * Used when processing offer created event
+ */
+export async function getSubscribersByDomain(domain: string): Promise<Subscriber[]> {
+  try {
+    const result = await pool.query(
+      "SELECT id, student_id, domain, channel, contact, enabled, created_at, updated_at FROM subscribers WHERE domain = $1",
+      [domain]
+    );
+
+    return result.rows.map(mapToSubscriber);
+  } catch (err) {
+    throw new Error(`Failed to get subscribers by domain: ${(err as Error).message}`);
+  }
+}
+
+/**
  * Helper function to map database row to Subscriber object
  */
 function mapToSubscriber(row: any): Subscriber {

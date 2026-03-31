@@ -1,5 +1,6 @@
 import { Offer, IOfferDocument } from "../models/offer.model.js";
 import { NotFoundError, ValidationError, ForbiddenError } from "../utils/errors.js";
+import { getPublisher } from "./rabbitmq.publisher.js";
 
 export interface CreateOfferData {
   title: string;
@@ -55,7 +56,21 @@ export async function createOffer(data: CreateOfferData): Promise<IOfferDocument
     available: available ?? true
   });
 
-  return await offer.save();
+  const savedOffer = await offer.save();
+
+  const publisher = getPublisher();
+  if (publisher) {
+    await publisher.publish("offer.created", {
+      offerId: savedOffer._id,
+      title: savedOffer.title,
+      city: savedOffer.city,
+      domain: savedOffer.domain,
+      salary: savedOffer.salary,
+      createdAt: new Date(),
+    });
+  }
+
+  return savedOffer;
 }
 
 export async function getOfferById(id: string): Promise<IOfferDocument> {

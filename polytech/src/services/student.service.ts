@@ -46,6 +46,10 @@ export async function listStudents(domain?: string): Promise<studentModel.Studen
   return studentModel.getAllStudents(domain);
 }
 
+export async function getAllStudents(domain?: string): Promise<studentModel.Student[]> {
+  return studentModel.getAllStudents(domain);
+}
+
 export async function getStudentById(id: number): Promise<studentModel.Student> {
   const student = await studentModel.getStudentById(id);
 

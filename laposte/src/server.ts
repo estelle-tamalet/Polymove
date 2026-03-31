@@ -9,20 +9,20 @@ const PORT = process.env.PORT || 4001;
 
 app.use(express.json());
 
-async function initializeRabbitMQ(): Promise<void> {
-  const rabbitmqConfig: RabbitMQConfig = {
+async function initializeRabbitMQSubscribers(): Promise<void> {
+  const studentRegisteredConfig: RabbitMQConfig = {
     url: process.env.RABBITMQ_URL || "amqp://admin:admin@rabbitmq:5672",
     exchange: "notifications_exchange",
     queue: "laposte.student.registered",
     routingKey: "student.registered",
   };
 
-  const rabbitmq = new RabbitMQService(rabbitmqConfig);
+  const rabbitmqStudentRegistered = new RabbitMQService(studentRegisteredConfig);
 
   try {
-    await rabbitmq.connect();
+    await rabbitmqStudentRegistered.connect();
 
-    await rabbitmq.subscribe(async (msg: any) => {
+    await rabbitmqStudentRegistered.subscribe(async (msg: any) => {
       const event = JSON.parse(msg.content.toString());
       console.log(`[La Poste] Received event: student.registered for studentId ${event.studentId}`);
 
@@ -34,9 +34,38 @@ async function initializeRabbitMQ(): Promise<void> {
       }
     });
 
-    console.log("✓ RabbitMQ subscriber initialized");
+    console.log("✓ RabbitMQ student.registered subscriber initialized");
   } catch (err) {
-    console.error("Failed to initialize RabbitMQ:", err);
+    console.error("Failed to initialize student.registered subscriber:", err);
+  }
+
+  const offerCreatedConfig: RabbitMQConfig = {
+    url: process.env.RABBITMQ_URL || "amqp://admin:admin@rabbitmq:5672",
+    exchange: "offers_exchange",
+    queue: "laposte.offer.created",
+    routingKey: "offer.created",
+  };
+
+  const rabbitmqOfferCreated = new RabbitMQService(offerCreatedConfig);
+
+  try {
+    await rabbitmqOfferCreated.connect();
+
+    await rabbitmqOfferCreated.subscribe(async (msg: any) => {
+      const event = JSON.parse(msg.content.toString());
+      console.log(`[La Poste] Received event: offer.created for offerId ${event.offerId}`);
+
+      try {
+        await subscriberService.handleOfferCreated(event);
+      } catch (err) {
+        console.error(`[Error] Failed to process offer.created event:`, err);
+        throw err;
+      }
+    });
+
+    console.log("✓ RabbitMQ offer.created subscriber initialized");
+  } catch (err) {
+    console.error("Failed to initialize offer.created subscriber:", err);
   }
 }
 
@@ -63,8 +92,8 @@ async function startServer(): Promise<void> {
     console.log("Initializing database...");
     await initDatabase();
 
-    console.log("Initializing RabbitMQ...");
-    await initializeRabbitMQ();
+    console.log("Initializing RabbitMQ subscribers...");
+    await initializeRabbitMQSubscribers();
 
     app.listen(PORT, () => {
       console.log(`✓ La Poste service running on port ${PORT}`);
