@@ -1,5 +1,6 @@
-import * as studentModel from "../models/student.model";
-import { NotFoundError, ValidationError } from "../utils/errors";
+import * as studentModel from "../models/student.model.js";
+import { NotFoundError, ValidationError } from "../utils/errors.js";
+import { getPublisher } from "./rabbitmq.publisher.js";
 
 export interface RegisterStudentData {
   firstname: string;
@@ -9,12 +10,36 @@ export interface RegisterStudentData {
 
 export async function registerStudent(data: RegisterStudentData): Promise<studentModel.Student> {
   const { firstname, name, domain } = data;
+  
+  console.log("[Student Service] registerStudent called with:", { firstname, name, domain });
 
   if (!firstname || !name || !domain) {
     throw new ValidationError("Missing fields");
   }
 
-  return studentModel.createStudent({ firstname, name, domain });
+  console.log("[Student Service] Creating student...");
+  const student = await studentModel.createStudent({ firstname, name, domain });
+  console.log("[Student Service] Student created:", student);
+
+  // Publish student.registered event to RabbitMQ
+  try {
+    const publisher = getPublisher();
+    if (publisher) {
+      const event = {
+        studentId: student.id,
+        name: student.name,
+        domain: student.domain,
+        createdAt: new Date(),
+      };
+      await publisher.publish("student.registered", event);
+      console.log(`[Student Service] Published student.registered event for student ${student.id}`);
+    }
+  } catch (err) {
+    // Log but don't fail - message bus is optional
+    console.error("Failed to publish student.registered event:", err);
+  }
+
+  return student;
 }
 
 export async function listStudents(domain?: string): Promise<studentModel.Student[]> {

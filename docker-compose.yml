@@ -77,6 +77,12 @@ services:
     environment:
       PORT: 3000
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/polymove_polytech
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: polymove_polytech
+      RABBITMQ_URL: amqp://admin:admin@rabbitmq:5672
     depends_on:
       - postgres
       - mi8
@@ -95,6 +101,26 @@ services:
       RABBITMQ_URL: amqp://admin:admin@rabbitmq:5672
     depends_on:
       - redis
+      - rabbitmq
+
+  laposte:
+    build: ./laposte
+    container_name: laposte-api
+    restart: unless-stopped
+    networks:
+      - polymove-network
+    ports:
+      - "4001:4001"
+    environment:
+      PORT: 4001
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: polymove_laposte
+      RABBITMQ_URL: amqp://admin:admin@rabbitmq:5672
+    depends_on:
+      - postgres
       - rabbitmq
 
 volumes:

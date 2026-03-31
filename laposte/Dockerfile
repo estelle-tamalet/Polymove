@@ -2,15 +2,19 @@ FROM node:20-alpine
 
 WORKDIR /app
 
+# Copy package files
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 
+# Copy source code
 COPY tsconfig.json ./
-COPY proto ./proto
 COPY src ./src
 
+# Build TypeScript
 RUN npm run build
 
-EXPOSE 3000
+# Expose port
+EXPOSE 4001
 
+# Start application
 CMD ["npm", "start"]

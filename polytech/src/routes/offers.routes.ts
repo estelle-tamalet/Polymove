@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import { getOffers } from "../services/offerAggregator.service";
+import { getOffers } from "../services/offerAggregator.service.js";
 
 const router = express.Router();
 

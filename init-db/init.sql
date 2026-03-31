@@ -13,3 +13,4 @@ CREATE TABLE IF NOT EXISTS internships (
   message TEXT
 );
 
+CREATE DATABASE IF NOT EXISTS polymove_laposte;

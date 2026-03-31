@@ -1,6 +1,5 @@
 import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
-import * as amqp from 'amqplib';
 import { RedisNewsRepository } from "./repository/news.repository";
 import { CityScoreRepository } from "./repository/cityScore.repository";
 import { RabbitMQService } from "./services/rabbitmq.service";
@@ -50,7 +49,7 @@ const newsService = {
 };
 
 // Handler for news.created RabbitMQ events
-async function handleNewsCreated(msg: amqp.Message): Promise<void> {
+async function handleNewsCreated(msg: any): Promise<void> {
   const news = JSON.parse(msg.content.toString());
   
   // Store news in Redis
