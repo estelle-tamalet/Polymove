@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import { initDatabase, pool } from "./db/db.js";
 import { RabbitMQService, type RabbitMQConfig } from "./services/rabbitmq.service.js";
 import * as subscriberService from "./services/subscriber.service.js";
@@ -7,6 +8,7 @@ import subscriberRoutes from "./routes/subscriber.routes.js";
 const app = express();
 const PORT = process.env.PORT || 4001;
 
+app.use(cors());
 app.use(express.json());
 
 async function initializeRabbitMQSubscribers(): Promise<void> {

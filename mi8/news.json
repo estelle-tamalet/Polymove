@@ -94,5 +94,37 @@
     "country": "Poland",
     "content": "Downtown area sees significant development with modern office and retail spaces.",
     "tags": ["innovation", "economy"]
+  },
+  {
+    "id": "13",
+    "title": "Paris tech startup ecosystem thrives",
+    "city": "Paris",
+    "country": "France",
+    "content": "Record number of tech startups establish headquarters in Paris, attracting global investors.",
+    "tags": ["innovation", "economy"]
+  },
+  {
+    "id": "14",
+    "title": "Paris public transportation modernized",
+    "city": "Paris",
+    "country": "France",
+    "content": "Metro system receives major upgrade with new trains and improved connectivity.",
+    "tags": ["innovation"]
+  },
+  {
+    "id": "15",
+    "title": "Paris education initiative launches",
+    "city": "Paris",
+    "country": "France",
+    "content": "New scholarship program promotes educational excellence and diversity in Paris.",
+    "tags": ["culture", "innovation"]
+  },
+  {
+    "id": "16",
+    "title": "Paris environmental sustainability program",
+    "city": "Paris",
+    "country": "France",
+    "content": "City commits to carbon-neutral status by expanding renewable energy and green spaces.",
+    "tags": ["innovation", "culture"]
   }
 ]

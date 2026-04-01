@@ -38,6 +38,28 @@ app.use((req: express.Request, res: Response) => {
   res.status(404).json({ error: "Not found" });
 });
 
+async function checkLaPostePreferences(studentId: number): Promise<boolean> {
+  const laPosteUrl = process.env.LAPOSTE_URL || "http://laposte-api:4001";
+  
+  try {
+    const response = await fetch(`${laPosteUrl}/api/subscribers/${studentId}`);
+    if (!response.ok) {
+      return false;
+    }
+    
+    const subscribers = await response.json();
+    if (!Array.isArray(subscribers)) {
+      return false;
+    }
+    
+    // Check if student has at least one enabled notification channel
+    return subscribers.some((sub: any) => sub.enabled === true);
+  } catch (err) {
+    console.warn(`[Polytech] Could not check La Poste preferences for student ${studentId}:`, err);
+    return false;
+  }
+}
+
 async function initializeRabbitMQSubscriber(): Promise<void> {
   const config = {
     url: process.env.RABBITMQ_URL || "amqp://admin:admin@rabbitmq:5672",
@@ -57,17 +79,27 @@ async function initializeRabbitMQSubscriber(): Promise<void> {
 
       try {
         const students = await studentService.getAllStudents(event.domain);
+        let notificationsCreated = 0;
 
         for (const student of students) {
-          await notificationService.createNotification({
-            studentId: student.id,
-            type: "new_offer",
-            offerId: event.offerId,
-            message: `New ${event.domain} internship in ${event.city}: ${event.title}`,
-          });
+          // Check if student has enabled notification preferences in La Poste
+          const hasEnabledPreferences = await checkLaPostePreferences(student.id);
+          
+          if (hasEnabledPreferences) {
+            await notificationService.createNotification({
+              studentId: student.id,
+              type: "new_offer",
+              offerId: event.offerId,
+              message: `New ${event.domain} internship in ${event.city}: ${event.title}`,
+            });
+            notificationsCreated++;
+            console.log(`[Polytech] Notification created for student ${student.id}`);
+          } else {
+            console.log(`[Polytech] Student ${student.id} has no enabled preferences, skipping notification`);
+          }
         }
 
-        console.log(`[Polytech] Notifications created for ${students.length} students`);
+        console.log(`[Polytech] Notifications created for ${notificationsCreated}/${students.length} students with enabled preferences`);
       } catch (err) {
         console.error(`[Error] Failed to process offer.created event:`, err);
         throw err;

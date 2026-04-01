@@ -39,10 +39,7 @@ export async function updateSubscriber(req: Request, res: Response): Promise<voi
       enabled,
     });
 
-    res.json({
-      message: "Subscriber updated successfully",
-      subscriber: updated,
-    });
+    res.json(updated);
   } catch (err) {
     const statusCode = (err as any).statusCode || 500;
     const message = (err as Error).message || "Internal server error";

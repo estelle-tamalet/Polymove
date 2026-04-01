@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 
-type ViewMode = "offers" | "dashboard";
+type ViewMode = "offers" | "dashboard" | "notifications" | "preferences";
 type SortCategory = "none" | "safety" | "economy" | "quality_of_life" | "culture";
 
 type CityScore = {
@@ -60,6 +60,27 @@ type ApplicationFeedback = {
   message: string;
 };
 
+type Subscriber = {
+  id: number;
+  student_id: number;
+  domain: string;
+  channel: string;
+  contact: string;
+  enabled: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+type Notification = {
+  id: number;
+  studentId: number;
+  type: string;
+  offerId: string;
+  message: string;
+  read: boolean;
+  createdAt: string | Date;
+};
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 
 const sortToApi: Record<Exclude<SortCategory, "none">, string> = {
@@ -91,6 +112,14 @@ export default function App() {
 
   const [applyingByOfferId, setApplyingByOfferId] = useState<Record<string, boolean>>({});
   const [applicationFeedbackByOfferId, setApplicationFeedbackByOfferId] = useState<Record<string, ApplicationFeedback>>({});
+
+  const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
+  const [subscribersLoading, setSubscribersLoading] = useState(false);
+  const [subscribersError, setSubscribersError] = useState<string | null>(null);
+
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unsubscribingbyChannel, setUnsubscribingByChannel] = useState<Record<string, boolean>>({});
+  const [updatingByChannel, setUpdatingByChannel] = useState<Record<string, boolean>>({});;
 
   const studentId = student?.id ?? null;
 
@@ -146,6 +175,40 @@ export default function App() {
     void loadRecommendedOffers();
   }, [sortCategory, studentId]);
 
+  useEffect(() => {
+    if (!studentId) {
+      setSubscribers([]);
+      setSubscribersError(null);
+      setNotifications([]);
+      return;
+    }
+
+    const loadSubscribers = async () => {
+      setSubscribersLoading(true);
+      setSubscribersError(null);
+
+      try {
+        const laPosteBaseUrl = import.meta.env.VITE_LAPOSTE_API_BASE_URL ?? "";
+        const data = await fetchJson<Subscriber[]>(
+          `${laPosteBaseUrl}/api/subscribers/${studentId}`
+        );
+        setSubscribers(Array.isArray(data) ? data : []);
+
+        // Load real notifications from Polytech API
+        const notificationsData = await fetchJson<Notification[]>(
+          `/students/${studentId}/notifications`
+        );
+        setNotifications(Array.isArray(notificationsData) ? notificationsData : []);
+      } catch (error) {
+        setSubscribersError(toErrorMessage(error));
+      } finally {
+        setSubscribersLoading(false);
+      }
+    };
+
+    void loadSubscribers();
+  }, [studentId]);
+
   const filteredOffers = useMemo(() => {
     return offers.filter((offer) => {
       const cityMatches = cityFilter === "all" || (offer.city ?? "") === cityFilter;
@@ -192,6 +255,10 @@ export default function App() {
     setSortCategory("none");
     setApplicationFeedbackByOfferId({});
     setApplyingByOfferId({});
+    setSubscribers([]);
+    setNotifications([]);
+    setUnsubscribingByChannel({});
+    setUpdatingByChannel({});
   };
 
   const handleApply = async (offer: Offer) => {
@@ -246,6 +313,114 @@ export default function App() {
     }
   };
 
+  const handleTogglePreference = async (subscriber: Subscriber) => {
+    if (!student) return;
+
+    const channel = subscriber.channel;
+    setUpdatingByChannel((previous) => ({
+      ...previous,
+      [channel]: true
+    }));
+
+    try {
+      const laPosteBaseUrl = import.meta.env.VITE_LAPOSTE_API_BASE_URL ?? "";
+      const updated = await fetchJson<Subscriber>(
+        `${laPosteBaseUrl}/api/subscribers/${student.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            channel,
+            contact: subscriber.contact,
+            enabled: !subscriber.enabled
+          })
+        }
+      );
+
+      setSubscribers((previous) =>
+        previous.map((sub) => (sub.channel === channel ? updated : sub))
+      );
+    } catch (error) {
+      setSubscribersError(toErrorMessage(error));
+    } finally {
+      setUpdatingByChannel((previous) => ({
+        ...previous,
+        [channel]: false
+      }));
+    }
+  };
+
+  const handleUnsubscribe = async (channel: string) => {
+    if (!student) return;
+
+    setUnsubscribingByChannel((previous) => ({
+      ...previous,
+      [channel]: true
+    }));
+
+    try {
+      const laPosteBaseUrl = import.meta.env.VITE_LAPOSTE_API_BASE_URL ?? "";
+      await fetchJson(
+        `${laPosteBaseUrl}/api/subscribers/${student.id}?channel=${channel}`,
+        {
+          method: "DELETE"
+        }
+      );
+
+      setSubscribers((previous) =>
+        previous.filter((sub) => sub.channel !== channel)
+      );
+    } catch (error) {
+      setSubscribersError(toErrorMessage(error));
+    } finally {
+      setUnsubscribingByChannel((previous) => ({
+        ...previous,
+        [channel]: false
+      }));
+    }
+  };
+
+  const handleUpdateContact = async (subscriber: Subscriber, newContact: string) => {
+    if (!student) return;
+
+    const channel = subscriber.channel;
+    setUpdatingByChannel((previous) => ({
+      ...previous,
+      [channel]: true
+    }));
+
+    try {
+      const laPosteBaseUrl = import.meta.env.VITE_LAPOSTE_API_BASE_URL ?? "";
+      const updated = await fetchJson<Subscriber>(
+        `${laPosteBaseUrl}/api/subscribers/${student.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            channel,
+            contact: newContact,
+            enabled: subscriber.enabled
+          })
+        }
+      );
+
+      setSubscribers((previous) =>
+        previous.map((sub) => (sub.channel === channel ? updated : sub))
+      );
+    } catch (error) {
+      setSubscribersError(toErrorMessage(error));
+    } finally {
+      setUpdatingByChannel((previous) => ({
+        ...previous,
+        [channel]: false
+      }));
+    }
+  };
+
   return (
     <div className="page">
       <header className="hero">
@@ -296,8 +471,25 @@ export default function App() {
           type="button"
           className={view === "dashboard" ? "tab active" : "tab"}
           onClick={() => setView("dashboard")}
+          disabled={!student}
         >
           Student Dashboard
+        </button>
+        <button
+          type="button"
+          className={view === "notifications" ? "tab active" : "tab"}
+          onClick={() => setView("notifications")}
+          disabled={!student}
+        >
+          Notifications
+        </button>
+        <button
+          type="button"
+          className={view === "preferences" ? "tab active" : "tab"}
+          onClick={() => setView("preferences")}
+          disabled={!student}
+        >
+          La Poste Preferences
         </button>
       </nav>
 
@@ -347,7 +539,7 @@ export default function App() {
             onApply={handleApply}
           />
         </section>
-      ) : (
+      ) : view === "dashboard" ? (
         <section className="panel">
           <div className="panel-header">
             <h2>Student Dashboard</h2>
@@ -400,7 +592,55 @@ export default function App() {
             <p className="message info">Enter a Student ID to load the personalized dashboard.</p>
           )}
         </section>
-      )}
+      ) : view === "notifications" ? (
+        <section className="panel">
+          <div className="panel-header">
+            <h2>Notification Center</h2>
+            <p>View alerts about new internship offers matching your domain.</p>
+          </div>
+
+          {student ? (
+            <>
+              {subscribersLoading ? <p className="message info">Loading notifications...</p> : null}
+              {subscribersError ? <p className="message error">{subscribersError}</p> : null}
+
+              <NotificationCenter
+                notifications={notifications}
+                subscribers={subscribers}
+                onTogglePreference={handleTogglePreference}
+                updatingByChannel={updatingByChannel}
+              />
+            </>
+          ) : (
+            <p className="message info">Enter a Student ID to view your notifications.</p>
+          )}
+        </section>
+      ) : view === "preferences" ? (
+        <section className="panel">
+          <div className="panel-header">
+            <h2>La Poste Preferences</h2>
+            <p>Configure how you want to receive notifications about new internship offers.</p>
+          </div>
+
+          {student ? (
+            <>
+              {subscribersLoading ? <p className="message info">Loading preferences...</p> : null}
+              {subscribersError ? <p className="message error">{subscribersError}</p> : null}
+
+              <LaPostePreferences
+                subscribers={subscribers}
+                onTogglePreference={handleTogglePreference}
+                onUnsubscribe={handleUnsubscribe}
+                onUpdateContact={handleUpdateContact}
+                updatingByChannel={updatingByChannel}
+                unsubscribingByChannel={unsubscribingbyChannel}
+              />
+            </>
+          ) : (
+            <p className="message info">Enter a Student ID to manage your preferences.</p>
+          )}
+        </section>
+      ) : null}
     </div>
   );
 }
@@ -524,6 +764,208 @@ function ScoreBar({ label, value }: { label: string; value: number }) {
   );
 }
 
+type NotificationCenterProps = {
+  notifications: Notification[];
+  subscribers: Subscriber[];
+  onTogglePreference: (subscriber: Subscriber) => void;
+  updatingByChannel: Record<string, boolean>;
+};
+
+function NotificationCenter({
+  notifications,
+  subscribers,
+  onTogglePreference,
+  updatingByChannel
+}: NotificationCenterProps) {
+  return (
+    <div className="notifications-container">
+      <article className="notifications-list">
+        <h3>Recent Alerts</h3>
+        {notifications.length ? (
+          <ul className="alerts-list">
+            {notifications.map((notification) => (
+              <li key={notification.id} className={notification.read ? "read" : "unread"}>
+                <p className="alert-message">{notification.message}</p>
+                <p className="alert-timestamp">
+                  {formatTimestamp(
+                    typeof notification.createdAt === "string"
+                      ? new Date(notification.createdAt).getTime()
+                      : notification.createdAt.getTime()
+                  )}
+                </p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="muted">No alerts at the moment.</p>
+        )}
+      </article>
+
+      <article className="preferences-summary">
+        <h3>Notification Channels</h3>
+        {subscribers.length ? (
+          <div className="channel-status-list">
+            {subscribers.map((subscriber) => (
+              <div key={subscriber.channel} className="channel-status">
+                <div className="channel-info">
+                  <p className="channel-name">{formatChannelName(subscriber.channel)}</p>
+                  <p className="channel-contact">{subscriber.contact || "Not configured"}</p>
+                </div>
+                <button
+                  type="button"
+                  className={subscriber.enabled ? "status-button active" : "status-button"}
+                  disabled={updatingByChannel[subscriber.channel]}
+                  onClick={() => onTogglePreference(subscriber)}
+                >
+                  {updatingByChannel[subscriber.channel]
+                    ? "Updating..."
+                    : subscriber.enabled
+                      ? "Enabled"
+                      : "Disabled"}
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="muted">No notification channels configured.</p>
+        )}
+      </article>
+    </div>
+  );
+}
+
+type LaPostePreferencesProps = {
+  subscribers: Subscriber[];
+  onTogglePreference: (subscriber: Subscriber) => void;
+  onUnsubscribe: (channel: string) => void;
+  onUpdateContact: (subscriber: Subscriber, newContact: string) => void;
+  updatingByChannel: Record<string, boolean>;
+  unsubscribingByChannel: Record<string, boolean>;
+};
+
+function LaPostePreferences({
+  subscribers,
+  onTogglePreference,
+  onUnsubscribe,
+  onUpdateContact,
+  updatingByChannel,
+  unsubscribingByChannel
+}: LaPostePreferencesProps) {
+  const [editingChannel, setEditingChannel] = useState<string | null>(null);
+  const [editValues, setEditValues] = useState<Record<string, string>>({});
+
+  const handleEditStart = (subscriber: Subscriber) => {
+    setEditingChannel(subscriber.channel);
+    setEditValues({
+      ...editValues,
+      [subscriber.channel]: subscriber.contact
+    });
+  };
+
+  const handleEditSave = (subscriber: Subscriber) => {
+    const newContact = editValues[subscriber.channel] || "";
+    void onUpdateContact(subscriber, newContact);
+    setEditingChannel(null);
+  };
+
+  return (
+    <div className="preferences-container">
+      <div className="preferences-grid">
+        {subscribers.length ? (
+          subscribers.map((subscriber) => (
+            <article key={subscriber.channel} className="preference-card">
+              <div className="preference-header">
+                <h4>{formatChannelName(subscriber.channel)}</h4>
+                <div className="preference-badge">
+                  {subscriber.enabled ? (
+                    <span className="badge enabled">Enabled</span>
+                  ) : (
+                    <span className="badge disabled">Disabled</span>
+                  )}
+                </div>
+              </div>
+
+              <p className="preference-label">Contact</p>
+              {editingChannel === subscriber.channel ? (
+                <div className="edit-contact">
+                  <input
+                    type="text"
+                    value={editValues[subscriber.channel] || ""}
+                    onChange={(event) =>
+                      setEditValues({
+                        ...editValues,
+                        [subscriber.channel]: event.target.value
+                      })
+                    }
+                    placeholder="e.g., your@email.com or @discord_username"
+                  />
+                  <button
+                    type="button"
+                    className="save-button"
+                    disabled={updatingByChannel[subscriber.channel]}
+                    onClick={() => handleEditSave(subscriber)}
+                  >
+                    {updatingByChannel[subscriber.channel] ? "Saving..." : "Save"}
+                  </button>
+                  <button
+                    type="button"
+                    className="cancel-button"
+                    disabled={updatingByChannel[subscriber.channel]}
+                    onClick={() => setEditingChannel(null)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <div className="contact-display">
+                  <p className="contact-value">{subscriber.contact || "Not configured"}</p>
+                  <button
+                    type="button"
+                    className="ghost-button"
+                    onClick={() => handleEditStart(subscriber)}
+                  >
+                    Edit
+                  </button>
+                </div>
+              )}
+
+              <div className="preference-actions">
+                <button
+                  type="button"
+                  className={subscriber.enabled ? "action-button" : "action-button inactive"}
+                  disabled={updatingByChannel[subscriber.channel]}
+                  onClick={() => onTogglePreference(subscriber)}
+                >
+                  {updatingByChannel[subscriber.channel]
+                    ? "Updating..."
+                    : subscriber.enabled
+                      ? "Disable Notifications"
+                      : "Enable Notifications"}
+                </button>
+
+                <button
+                  type="button"
+                  className="danger-button"
+                  disabled={unsubscribingByChannel[subscriber.channel]}
+                  onClick={() => onUnsubscribe(subscriber.channel)}
+                >
+                  {unsubscribingByChannel[subscriber.channel] ? "Unsubscribing..." : "Unsubscribe"}
+                </button>
+              </div>
+
+              <p className="preference-meta">
+                Set up {formatTimestamp(new Date(subscriber.created_at).getTime())}
+              </p>
+            </article>
+          ))
+        ) : (
+          <p className="message info">No preference channels available.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(buildApiUrl(path), init);
 
@@ -639,4 +1081,12 @@ function capitalize(value: string): string {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+function formatChannelName(channel: string): string {
+  if (channel === "email") return "Email";
+  if (channel === "discord") return "Discord";
+  if (channel === "slack") return "Slack";
+  if (channel === "telegram") return "Telegram";
+  return capitalize(channel);
 }

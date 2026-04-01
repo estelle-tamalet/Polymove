@@ -44,8 +44,8 @@ services:
     networks:
       - polymove-network
     ports:
-      - "5672:5672"    # AMQP port
-      - "15672:15672"  # Management UI
+      - "5672:5672"
+      - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: admin
       RABBITMQ_DEFAULT_PASS: admin
@@ -85,10 +85,13 @@ services:
       DB_PASSWORD: postgres
       DB_NAME: polymove_polytech
       RABBITMQ_URL: amqp://admin:admin@rabbitmq:5672
+      OFFER_SERVICE_URL: http://erasmumu-api:4000
+      MI8_GRPC_URL: mi8-grpc:50051
     depends_on:
       - postgres
       - mi8
       - rabbitmq
+      - erasmumu
 
   mi8:
     build: ./mi8
@@ -124,6 +127,21 @@ services:
     depends_on:
       - postgres
       - rabbitmq
+
+  frontend:
+    build: ./frontend
+    container_name: polymove-frontend
+    restart: unless-stopped
+    networks:
+      - polymove-network
+    ports:
+      - "5173:4173"
+    environment:
+      VITE_POLYTECH_URL: http://polytech-api:3000
+      VITE_LAPOSTE_URL: http://laposte-api:4001
+    depends_on:
+      - polytech
+      - laposte
 
 volumes:
   postgres_data:

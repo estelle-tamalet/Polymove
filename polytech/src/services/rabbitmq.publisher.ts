@@ -14,7 +14,9 @@ export class RabbitMQPublisher {
   private connection: any = null;
   private channel: any = null;
   private config: RabbitMQPublisherConfig;
-  private isConnected = false;
+  private connected = false;
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 5;
 
   constructor(config: RabbitMQPublisherConfig) {
     this.config = config;
@@ -31,12 +33,19 @@ export class RabbitMQPublisher {
       // Assert exchange with type 'topic' for topic-based routing
       await this.channel!.assertExchange(this.config.exchange, "topic", { durable: true });
 
-      this.isConnected = true;
+      this.connected = true;
+      this.reconnectAttempts = 0;
       console.log(`✓ RabbitMQ Publisher connected - Exchange: ${this.config.exchange}`);
     } catch (err) {
       console.error("Failed to connect to RabbitMQ Publisher:", err);
-      // Don't throw - allow service to continue without message bus
-      this.isConnected = false;
+      this.connected = false;
+      // Implement retry logic
+      if (this.reconnectAttempts < this.maxReconnectAttempts) {
+        this.reconnectAttempts++;
+        const delay = Math.pow(2, this.reconnectAttempts) * 1000;
+        console.log(`Retrying RabbitMQ Publisher connection in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+        setTimeout(() => this.connect().catch(err => console.error("Reconnect failed:", err)), delay);
+      }
     }
   }
 
@@ -46,7 +55,7 @@ export class RabbitMQPublisher {
    * @param data - The event payload
    */
   async publish(routingKey: string, data: any): Promise<void> {
-    if (!this.isConnected || !this.channel) {
+    if (!this.connected || !this.channel) {
       console.warn(`[RabbitMQ] Not connected - skipping publish of ${routingKey}`);
       return;
     }
@@ -66,6 +75,13 @@ export class RabbitMQPublisher {
   }
 
   /**
+   * Check if publisher is connected
+   */
+  isConnected(): boolean {
+    return this.connected;
+  }
+
+  /**
    * Close RabbitMQ connection
    */
   async close(): Promise<void> {
@@ -76,18 +92,11 @@ export class RabbitMQPublisher {
       if (this.connection) {
         await this.connection.close();
       }
-      this.isConnected = false;
+      this.connected = false;
       console.log("✓ RabbitMQ Publisher connection closed");
     } catch (err) {
       console.error("Error closing RabbitMQ Publisher connection:", err);
     }
-  }
-
-  /**
-   * Check if connected
-   */
-  isReady(): boolean {
-    return this.isConnected;
   }
 }
 
@@ -103,8 +112,13 @@ export async function initializePublisher(): Promise<RabbitMQPublisher> {
       url: process.env.RABBITMQ_URL || "amqp://admin:admin@rabbitmq:5672",
       exchange: "notifications_exchange",
     });
+  }
+  
+  // Always ensure connected
+  if (!publisher.isConnected()) {
     await publisher.connect();
   }
+  
   return publisher;
 }
 
