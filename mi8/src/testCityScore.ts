@@ -1,4 +1,4 @@
-import { CityScoreRepository } from './repository/cityScore.repository';
+import { CityScoreRepository } from './repository/cityScore.repository.js';
 
 async function main() {
   const repo = new CityScoreRepository();

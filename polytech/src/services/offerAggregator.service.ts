@@ -1,5 +1,5 @@
 import axios from "axios";
-import { getCityScore, getLatestNewsInCity, News, CityScore } from "../mi8/mi8.client";
+import { getCityScore, getLatestNewsInCity, News, CityScore } from "../mi8/mi8.client.js";
 
 export interface EnrichedOffer {
   [key: string]: unknown;

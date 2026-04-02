@@ -13,3 +13,9 @@ CREATE TABLE IF NOT EXISTS internships (
   message TEXT
 );
 
+INSERT INTO students (firstname, name, domain) VALUES
+  ('Jean', 'Dupont', 'Computer Science'),
+  ('Marie', 'Martin', 'Engineering'),
+  ('Pierre', 'Lefevre', 'Data Science')
+ON CONFLICT DO NOTHING;
+

@@ -1,7 +1,7 @@
 import axios from "axios";
-import * as studentModel from "../models/student.model";
-import * as internshipModel from "../models/internship.model";
-import { NotFoundError, ValidationError } from "../utils/errors";
+import * as studentModel from "../models/student.model.js";
+import * as internshipModel from "../models/internship.model.js";
+import { NotFoundError, ValidationError } from "../utils/errors.js";
 
 export interface Offer {
   domain: string;

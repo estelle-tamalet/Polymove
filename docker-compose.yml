@@ -3,6 +3,8 @@ services:
     image: postgres:15
     container_name: polytech-postgres
     restart: always
+    networks:
+      - polymove-network
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -17,6 +19,8 @@ services:
     image: mongo:7
     container_name: erasmumu-mongo
     restart: always
+    networks:
+      - polymove-network
     ports:
       - "27017:27017"
     volumes:
@@ -32,6 +36,81 @@ services:
       - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
+
+  erasmumu:
+    build:
+      context: ./erasmumu
+      dockerfile: Dockerfile
+    container_name: erasmumu-service
+    restart: always
+    networks:
+      - polymove-network
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: 4000
+      MONGODB_URI: mongodb://mongo:27017/erasmumu
+    depends_on:
+      - mongo
+    command: npm start
+
+  mi8:
+    build:
+      context: ./mi8
+      dockerfile: Dockerfile
+    container_name: mi8-service
+    restart: always
+    networks:
+      - polymove-network
+    ports:
+      - "50051:50051"
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      - redis
+    command: npm start
+
+  polytech:
+    build:
+      context: ./polytech
+      dockerfile: Dockerfile
+    container_name: polytech-service
+    restart: always
+    networks:
+      - polymove-network
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: polymove_polytech
+      MI8_GRPC_URL: mi8:50051
+      OFFER_SERVICE_URL: http://erasmumu:4000
+    depends_on:
+      - postgres
+      - erasmumu
+      - mi8
+    command: npm start
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend-service
+    restart: always
+    networks:
+      - polymove-network
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://polytech:3000
+    depends_on:
+      - polytech
+    command: serve -s dist -l 5173
 
 volumes:
   postgres_data:

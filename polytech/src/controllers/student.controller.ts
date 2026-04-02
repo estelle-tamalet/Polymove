@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import * as studentService from "../services/student.service";
-import * as studentRecommendationService from "../services/studentRecommendation.service";
+import * as studentService from "../services/student.service.js";
+import * as studentRecommendationService from "../services/studentRecommendation.service.js";
 
 export async function createStudent(req: Request, res: Response): Promise<void> {
   try {
@@ -26,11 +26,15 @@ export async function getStudents(req: Request, res: Response): Promise<void> {
 export async function getStudentById(req: Request, res: Response): Promise<void> {
   try {
     const id = parseInt(req.params.id);
+    console.log(`Fetching student with id: ${id}`);
     const student = await studentService.getStudentById(id);
+    console.log(`Student found:`, student);
     res.json(student);
   } catch (err) {
+    console.error(`Error fetching student:`, err);
     const statusCode = (err as any).statusCode || 500;
-    res.status(statusCode).json({ error: (err as Error).message });
+    const message = (err as Error).message || "Unknown error";
+    res.status(statusCode).json({ error: message });
   }
 }
 

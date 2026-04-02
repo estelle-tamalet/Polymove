@@ -1,5 +1,5 @@
-import * as studentModel from "../models/student.model";
-import { NotFoundError, ValidationError } from "../utils/errors";
+import * as studentModel from "../models/student.model.js";
+import { NotFoundError, ValidationError } from "../utils/errors.js";
 
 export interface RegisterStudentData {
   firstname: string;

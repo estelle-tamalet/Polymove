@@ -1,5 +1,5 @@
-import { Offer, IOfferDocument } from "../models/offer.model";
-import { NotFoundError, ValidationError, ForbiddenError } from "../utils/errors";
+import { Offer, IOfferDocument } from "../models/offer.model.js";
+import { NotFoundError, ValidationError, ForbiddenError } from "../utils/errors.js";
 
 export interface CreateOfferData {
   title: string;

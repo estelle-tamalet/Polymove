@@ -60,7 +60,9 @@ type ApplicationFeedback = {
   message: string;
 };
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
+const API_BASE_URL = typeof window !== 'undefined' && window.location ? 
+  `http://${window.location.hostname}:3000` : 
+  (import.meta.env.VITE_API_BASE_URL ?? "");
 
 const sortToApi: Record<Exclude<SortCategory, "none">, string> = {
   safety: "safety",

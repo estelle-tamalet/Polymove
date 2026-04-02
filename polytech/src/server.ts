@@ -1,11 +1,23 @@
 import "dotenv/config";
 import express, { Express, Request, Response } from "express";
-import studentRoutes from "./routes/student.routes";
-import internshipRoutes from "./routes/internship.routes";
-import { getOffers } from "./services/offerAggregator.service";
+import studentRoutes from "./routes/student.routes.js";
+import internshipRoutes from "./routes/internship.routes.js";
+import { getOffers } from "./services/offerAggregator.service.js";
 
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
+
+// CORS middleware
+app.use((req: Request, res: Response, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type");
+  if (req.method === "OPTIONS") {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
 
 app.use(express.json());
 app.use(studentRoutes);

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import * as offerService from "../services/offer.service";
+import * as offerService from "../services/offer.service.js";
 
 export async function createOffer(req: Request, res: Response): Promise<void> {
   try {

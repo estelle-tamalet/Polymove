@@ -1,5 +1,5 @@
-import * as studentModel from "../models/student.model";
-import { getAggregatedOffers } from "./offerAggregator.service";
+import * as studentModel from "../models/student.model.js";
+import { getAggregatedOffers } from "./offerAggregator.service.js";
 
 export interface RecommendationOptions {
   limit?: number;

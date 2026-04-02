@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import * as internshipService from "../services/internship.service";
+import * as internshipService from "../services/internship.service.js";
 
 export async function createInternship(req: Request, res: Response): Promise<void> {
   try {
