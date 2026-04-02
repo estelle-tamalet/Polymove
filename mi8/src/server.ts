@@ -1,7 +1,7 @@
 import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
-import { RedisNewsRepository } from "./repository/news.repository";
-import { CityScoreRepository } from "./repository/cityScore.repository";
+import { RedisNewsRepository } from "./repository/news.repository.js";
+import { CityScoreRepository } from "./repository/cityScore.repository.js";
 
 const packageDef = protoLoader.loadSync("proto/news.proto", {
   keepCase: true,

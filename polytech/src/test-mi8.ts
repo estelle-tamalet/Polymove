@@ -1,4 +1,4 @@
-import { getCityScore, getLatestNewsInCity } from "./mi8/mi8.client";
+import { getCityScore, getLatestNewsInCity } from "./mi8/mi8.client.js";
 
 async function testCityScore(): Promise<void> {
   try {
