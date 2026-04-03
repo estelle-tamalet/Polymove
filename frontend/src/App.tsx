@@ -81,6 +81,14 @@ type Notification = {
   createdAt: string | Date;
 };
 
+type NotificationCenterProps = {
+  notifications: Notification[];
+  subscribers: Subscriber[];
+  onTogglePreference: (subscriber: Subscriber) => void;
+  onMarkAsRead: (notificationId: number) => void;
+  updatingByChannel: Record<string, boolean>;
+};
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 
 const sortToApi: Record<Exclude<SortCategory, "none">, string> = {
@@ -362,15 +370,27 @@ export default function App() {
 
     try {
       const laPosteBaseUrl = import.meta.env.VITE_LAPOSTE_API_BASE_URL ?? "";
-      await fetchJson(
-        `${laPosteBaseUrl}/api/subscribers/${student.id}?channel=${channel}`,
+      // Frontend calls PUT with enabled: false to disable subscription
+      // (Backend DELETE endpoint performs hard delete if called directly via API)
+      await fetchJson<Subscriber>(
+        `${laPosteBaseUrl}/api/subscribers/${student.id}`,
         {
-          method: "DELETE"
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            channel,
+            enabled: false
+          })
         }
       );
 
+      // Update local state to reflect disabled subscription
       setSubscribers((previous) =>
-        previous.filter((sub) => sub.channel !== channel)
+        previous.map((sub) =>
+          sub.channel === channel ? { ...sub, enabled: false } : sub
+        )
       );
     } catch (error) {
       setSubscribersError(toErrorMessage(error));
@@ -418,6 +438,22 @@ export default function App() {
         ...previous,
         [channel]: false
       }));
+    }
+  };
+
+  const handleMarkNotificationAsRead = async (notificationId: number) => {
+    try {
+      await fetchJson(`/notifications/${notificationId}/read`, {
+        method: "PUT"
+      });
+
+      setNotifications((previous) =>
+        previous.map((notif) =>
+          notif.id === notificationId ? { ...notif, read: true } : notif
+        )
+      );
+    } catch (error) {
+      console.error("Failed to mark notification as read:", error);
     }
   };
 
@@ -608,6 +644,7 @@ export default function App() {
                 notifications={notifications}
                 subscribers={subscribers}
                 onTogglePreference={handleTogglePreference}
+                onMarkAsRead={handleMarkNotificationAsRead}
                 updatingByChannel={updatingByChannel}
               />
             </>
@@ -764,23 +801,22 @@ function ScoreBar({ label, value }: { label: string; value: number }) {
   );
 }
 
-type NotificationCenterProps = {
-  notifications: Notification[];
-  subscribers: Subscriber[];
-  onTogglePreference: (subscriber: Subscriber) => void;
-  updatingByChannel: Record<string, boolean>;
-};
-
 function NotificationCenter({
   notifications,
   subscribers,
   onTogglePreference,
+  onMarkAsRead,
   updatingByChannel
 }: NotificationCenterProps) {
+  const unreadCount = notifications.filter((notif) => !notif.read).length;
+
   return (
     <div className="notifications-container">
       <article className="notifications-list">
-        <h3>Recent Alerts</h3>
+        <div className="notifications-header">
+          <h3>Recent Alerts</h3>
+          {unreadCount > 0 && <span className="unread-badge">{unreadCount}</span>}
+        </div>
         {notifications.length ? (
           <ul className="alerts-list">
             {notifications.map((notification) => (
@@ -793,6 +829,15 @@ function NotificationCenter({
                       : notification.createdAt.getTime()
                   )}
                 </p>
+                {!notification.read && (
+                  <button
+                    type="button"
+                    className="mark-read-button"
+                    onClick={() => onMarkAsRead(notification.id)}
+                  >
+                    Mark as read
+                  </button>
+                )}
               </li>
             ))}
           </ul>
@@ -932,24 +977,21 @@ function LaPostePreferences({
               <div className="preference-actions">
                 <button
                   type="button"
-                  className={subscriber.enabled ? "action-button" : "action-button inactive"}
-                  disabled={updatingByChannel[subscriber.channel]}
-                  onClick={() => onTogglePreference(subscriber)}
+                  className={subscriber.enabled ? "subscribe-button active" : "subscribe-button"}
+                  disabled={updatingByChannel[subscriber.channel] || unsubscribingByChannel[subscriber.channel]}
+                  onClick={() => {
+                    if (subscriber.enabled) {
+                      onUnsubscribe(subscriber.channel);
+                    } else {
+                      onTogglePreference(subscriber);
+                    }
+                  }}
                 >
-                  {updatingByChannel[subscriber.channel]
+                  {updatingByChannel[subscriber.channel] || unsubscribingByChannel[subscriber.channel]
                     ? "Updating..."
                     : subscriber.enabled
-                      ? "Disable Notifications"
-                      : "Enable Notifications"}
-                </button>
-
-                <button
-                  type="button"
-                  className="danger-button"
-                  disabled={unsubscribingByChannel[subscriber.channel]}
-                  onClick={() => onUnsubscribe(subscriber.channel)}
-                >
-                  {unsubscribingByChannel[subscriber.channel] ? "Unsubscribing..." : "Unsubscribe"}
+                      ? "Unsubscribe"
+                      : "Subscribe"}
                 </button>
               </div>
 

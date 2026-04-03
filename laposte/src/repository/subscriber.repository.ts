@@ -33,10 +33,16 @@ export async function createSubscriber(data: SubscriberData): Promise<Subscriber
       [studentId, channel]
     );
 
+    // If preference exists but is disabled, reactivate it instead of creating
     if (existing.rows.length > 0) {
-      throw new ConflictError(
-        `Subscriber already exists for student ${studentId} on channel ${channel}`
+      const result = await pool.query(
+        `UPDATE subscribers 
+         SET contact = $1, enabled = $2, updated_at = CURRENT_TIMESTAMP
+         WHERE student_id = $3 AND channel = $4
+         RETURNING id, student_id, domain, channel, contact, enabled, created_at, updated_at`,
+        [contact, enabled, studentId, channel]
       );
+      return mapToSubscriber(result.rows[0]);
     }
 
     const result = await pool.query(

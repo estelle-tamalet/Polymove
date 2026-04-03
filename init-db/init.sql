@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS internships (
   student_id INT,
   offer_id TEXT,
   status TEXT,
-  message TEXT
+  message TEXT,
+  FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS notifications (
@@ -21,7 +22,7 @@ CREATE TABLE IF NOT EXISTS notifications (
   message TEXT NOT NULL,
   read BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (student_id) REFERENCES students(id)
+  FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
 );
 
 CREATE DATABASE IF NOT EXISTS polymove_laposte;

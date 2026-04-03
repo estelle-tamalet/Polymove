@@ -52,6 +52,28 @@ const newsService = {
   GetCityStats: async (call: any, callback: any) => {
     const stats = await cityStatsRepo.getCityStats(call.request.city);
     callback(null, { stats });
+  },
+
+  CreateNews: async (call: any, callback: any) => {
+    try {
+      const news = call.request;
+      await newsRepo.createNews({
+        id: news.id,
+        title: news.title,
+        city: news.city,
+        country: news.country,
+        content: news.content,
+        createdAt: news.createdAt || Date.now(),
+        tags: news.tags || []
+      });
+
+      await cityScoreRepo.updateCityScore(news.city, news.tags || []);
+      
+      console.log(`[gRPC] News created: ${news.title} (${news.city})`);
+      callback(null, {});
+    } catch (error) {
+      callback(error);
+    }
   }
 };
 
